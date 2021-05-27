@@ -1,24 +1,18 @@
 import math
 import pygame
 
-
-def Threedigit(s: str):
-    if len(s) == 1:
-        return '00' + s
-    if len(s) == 2:
-        return '0' + s
-    return s
-
-
 screen = pygame.display.set_mode((700, 700))
 pygame.init()
 pygame.font.init()
 pygame.display.set_caption('Solar System')
 font = pygame.font.SysFont('comicsansms', 30)
+clock = pygame.time.Clock()
 
-speed = 0.05
+speed = 0.1
 cC = math.pi / 180
 earthPerspective = False
+zoomFactor = 0.02
+scrollFactor = 5 / 4
 
 MercuryDeg = 0
 VenusDeg = 0
@@ -38,26 +32,75 @@ MarsColor = (255, 64, 64)
 JupiterColor = (201, 144, 57)
 UranusColor = (147, 205, 241)
 NeptuneColor = (62, 84, 232)
+
+SunPoints = []
+MercuryPoints = []
+VenusPoints = []
+EarthPoints = []
+MoonPoints = []
+MarsPoints = []
+JupiterPoints = []
+UranusPoints = []
+NeptunePoints = []
+
 zoom = 1
 
 cx = 0
 cy = 0
 
+
+def draw(x):
+    if earthPerspective:
+        x.pop(3)
+    else:
+        x.pop(0)
+
+    for l in x:
+        for p in range(len(l) - 1):
+            pygame.draw.line(screen, (255, 255, 255), l[p], l[p+1], 3)
+
+
+def clear():
+    global SunPoints, MercuryPoints, VenusPoints, EarthPoints, MoonPoints, MarsPoints, JupiterPoints, UranusPoints, NeptunePoints
+
+    SunPoints = []
+    MercuryPoints = []
+    VenusPoints = []
+    EarthPoints = []
+    MoonPoints = []
+    MarsPoints = []
+    JupiterPoints = []
+    UranusPoints = []
+    NeptunePoints = []
+
+
 while True:
+    clock.tick(200)
+
     keysPressed = pygame.key.get_pressed()
     if keysPressed[pygame.K_LEFT]:
-        cx += 1 / 4
+        cx += scrollFactor
+        clear()
     if keysPressed[pygame.K_RIGHT]:
-        cx -= 1 / 4
+        cx -= scrollFactor
+        clear()
     if keysPressed[pygame.K_UP]:
-        cy += 1 / 4
+        cy += scrollFactor
+        clear()
     if keysPressed[pygame.K_DOWN]:
-        cy -= 1 / 4
+        cy -= scrollFactor
+        clear()
 
-    if keysPressed[pygame.K_a]:
-        zoom = max(0.05, zoom - 0.001)
-    if keysPressed[pygame.K_d]:
-        zoom = min(4, zoom + 0.001)
+    if keysPressed[pygame.K_a] and zoom - zoomFactor >= 0.05:
+        cx *= (zoom - zoomFactor) / zoom
+        cy *= (zoom - zoomFactor) / zoom
+        zoom -= zoomFactor
+        clear()
+    if keysPressed[pygame.K_d] and zoom + zoomFactor <= 4:
+        cx *= (zoom + zoomFactor) / zoom
+        cy *= (zoom + zoomFactor) / zoom
+        zoom += zoomFactor
+        clear()
 
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
@@ -67,6 +110,7 @@ while True:
                 if earthPerspective:
                     cx, cy = 0, 0
                 earthPerspective = not earthPerspective
+                clear()
 
     if earthPerspective:
         cx = -200 * math.sin(EarthDeg * cC) * zoom
@@ -84,34 +128,59 @@ while True:
     NeptuneDeg += speed / 165
 
     # Sun
-    pygame.draw.circle(screen, SunColor, (350 + cx, 350 + cy), 50 * zoom)
+    SunPoints.append((350 + cx, 350 + cy))
+    pygame.draw.circle(screen, SunColor, SunPoints[-1], 50 * zoom)
     # Mercury
-    pygame.draw.circle(screen, MercuryColor, (350 + 80 * math.sin(MercuryDeg * cC) * zoom + cx,
-                                              350 + 80 * math.cos(MercuryDeg * cC) * zoom + cy), 3.8 * zoom)
+    MercuryPoints.append((350 + 80 * math.sin(MercuryDeg * cC) * zoom + cx,
+                          350 + 80 * math.cos(MercuryDeg * cC) * zoom + cy))
+    pygame.draw.circle(screen, MercuryColor, MercuryPoints[-1], 3.8 * zoom)
     # Venus
-    pygame.draw.circle(screen, VenusColor, (350 + 140 * math.sin(VenusDeg * cC) * zoom + cx,
-                                            350 + 140 * math.cos(VenusDeg * cC) * zoom + cy), 9.4 * zoom)
+    VenusPoints.append((350 + 140 * math.sin(VenusDeg * cC) * zoom + cx,
+                        350 + 140 * math.cos(VenusDeg * cC) * zoom + cy))
+    pygame.draw.circle(screen, VenusColor, VenusPoints[-1], 9.4 * zoom)
     # Earth
-    pygame.draw.circle(screen, EarthColor, (350 + 200 * math.sin(EarthDeg * cC) * zoom + cx,
-                                            350 + 200 * math.cos(EarthDeg * cC) * zoom + cy), 10 * zoom)
+    EarthPoints.append((350 + 200 * math.sin(EarthDeg * cC) * zoom + cx,
+                        350 + 200 * math.cos(EarthDeg * cC) * zoom + cy))
+    pygame.draw.circle(screen, EarthColor, EarthPoints[-1], 10 * zoom)
     # Moon
-    pygame.draw.circle(screen, MoonColor,
-                       (350 + 200 * math.sin(EarthDeg * cC) * zoom + 14 * math.sin(MoonDeg * cC) * zoom + cx,
-                        350 + 200 * math.cos(EarthDeg * cC) * zoom + 14 * math.cos(MoonDeg * cC) * zoom + cy),
-                       2.7 * zoom)
+    MoonPoints.append((350 + 200 * math.sin(EarthDeg * cC) * zoom + 14 * math.sin(MoonDeg * cC) * zoom + cx,
+                       350 + 200 * math.cos(EarthDeg * cC) * zoom + 14 * math.cos(MoonDeg * cC) * zoom + cy))
+    pygame.draw.circle(screen, MoonColor, MoonPoints[-1], 2.7 * zoom)
     # Mars
-    pygame.draw.circle(screen, MarsColor, (350 + 304 * math.sin(MarsDeg * cC) * zoom + cx,
-                                           350 + 304 * math.cos(MarsDeg * cC) * zoom + cy), 5.3 * zoom)
+    MarsPoints.append((350 + 304 * math.sin(MarsDeg * cC) * zoom + cx,
+                       350 + 304 * math.cos(MarsDeg * cC) * zoom + cy))
+    pygame.draw.circle(screen, MarsColor, MarsPoints[-1], 5.3 * zoom)
     # Jupiter
-    pygame.draw.circle(screen, JupiterColor, (350 + 1000 * math.sin(JupiterDeg * cC) * zoom + cx,
-                                              350 + 1000 * math.cos(JupiterDeg * cC) * zoom + cy), 42 * zoom)
+    JupiterPoints.append((350 + 1000 * math.sin(JupiterDeg * cC) * zoom + cx,
+                          350 + 1000 * math.cos(JupiterDeg * cC) * zoom + cy))
+    pygame.draw.circle(screen, JupiterColor, JupiterPoints[-1], 42 * zoom)
     # Uranus
-    pygame.draw.circle(screen, UranusColor, (350 + 4000 * math.sin(UranusDeg * cC) * zoom + cx,
-                                             350 + 4000 * math.cos(UranusDeg * cC) * zoom + cy), 24.9 * zoom)
+    UranusPoints.append((350 + 4000 * math.sin(UranusDeg * cC) * zoom + cx,
+                         350 + 4000 * math.cos(UranusDeg * cC) * zoom + cy))
+    pygame.draw.circle(screen, UranusColor, UranusPoints[-1], 24.9 * zoom)
     # Neptune
-    pygame.draw.circle(screen, NeptuneColor, (350 + 6000 * math.sin(NeptuneDeg * cC) * zoom + cx,
-                                              350 + 6000 * math.cos(NeptuneDeg * cC) * zoom + cy), 24 * zoom)
+    NeptunePoints.append((350 + 6000 * math.sin(NeptuneDeg * cC) * zoom + cx,
+                          350 + 6000 * math.cos(NeptuneDeg * cC) * zoom + cy))
+    pygame.draw.circle(screen, NeptuneColor, NeptunePoints[-1], 24 * zoom)
+
+    if len(SunPoints) > 250:
+        SunPoints.pop(0)
+        MercuryPoints.pop(0)
+        VenusPoints.pop(0)
+        EarthPoints.pop(0)
+        MoonPoints.pop(0)
+        MarsPoints.pop(0)
+        JupiterPoints.pop(0)
+        UranusPoints.pop(0)
+        NeptunePoints.pop(0)
+
+    if keysPressed[pygame.K_m]:
+        draw([SunPoints, MercuryPoints, VenusPoints, EarthPoints, MoonPoints, MarsPoints, JupiterPoints, UranusPoints, NeptunePoints])
 
     screen.blit(font.render(f'Zoom: {round(zoom, 2)}x', True, (255, 255, 255)), (10, 10))
+    screen.blit(font.render(f'{round(clock.get_fps())} FPS', True, (255, 255, 255)), (10, 40))
+
+    pygame.draw.line(screen, (255, 255, 255), (345, 350), (355, 350))
+    pygame.draw.line(screen, (255, 255, 255), (350, 345), (350, 355))
 
     pygame.display.update()
